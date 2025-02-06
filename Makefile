@@ -30,7 +30,16 @@ else
 	FINAL_FLAGS := -g $(WARNING_FLAGS) $(DEBUG_FLAGS)
 endif
 
-all: tippecanoe tippecanoe-enumerate tippecanoe-decode tile-join unit tippecanoe-json-tool tippecanoe-overzoom
+.PHONY: check_atomic
+check_atomic:
+    @echo '#include <atomic>\n#include <cstdint>\nstd::atomic<uint16_t> value(0);\nint main(){value.store(42,std::memory_order_relaxed);return value.load(std::memory_order_relaxed);}' > check_atomic.cpp
+    @if ! $(CXX) $(CXXFLAGS) -o /dev/null check_atomic.cpp 2>/dev/null; then \
+        echo "Linking against -latomic"; \
+        LDFLAGS += -latomic; \
+    fi
+    @rm -f check_atomic.cpp
+
+all: check_atomic tippecanoe tippecanoe-enumerate tippecanoe-decode tile-join unit tippecanoe-json-tool tippecanoe-overzoom
 
 docs: man/tippecanoe.1
 
